@@ -1,0 +1,16 @@
+Raw-Data/A4-640_100g_50ms_1_auto_adjusted.tif
+Raw-Data/A4-640_100g_50ms_1.tif
+Raw-Data/20230317_A6-568-SRRF_100g_50ms_strobe_1.tif
+Raw-Data/20230317_A6-568-SRRF_100g_50ms_strobe_1_auto_adjusted.tif
+Example ML Notebooks/MNIST/raw/train-labels-idx1-ubyte.gz
+Example ML Notebooks/MNIST/raw/train-labels-idx1-ubyte
+Example ML Notebooks/MNIST/raw/train-images-idx3-ubyte.gz
+Example ML Notebooks/MNIST/raw/train-images-idx3-ubyte
+Example ML Notebooks/MNIST/raw/t10k-labels-idx1-ubyte.gz
+Example ML Notebooks/MNIST/raw/t10k-labels-idx1-ubyte
+Example ML Notebooks/MNIST/raw/t10k-images-idx3-ubyte.gz
+Example ML Notebooks/MNIST/raw/t10k-images-idx3-ubyte
+Region3-1.tif
+A4_640.npy
+A6_568.npy
+localizations.npy
