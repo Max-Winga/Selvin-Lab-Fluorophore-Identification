@@ -17,3 +17,16 @@ localizations.npy
 PSF_Identifier_Attempt_2.ipynb
 A4_640_29x29_gpu.npy
 A6_568_29x29_gpu.npy
+Category-Testing/A6_category_worst.npy
+Category-Testing/A6_category_tight.npy
+Category-Testing/A6_category_default.npy
+Category-Testing/A6_category_dark.npy
+Category-Testing/A6_category_bright.npy
+Category-Testing/A4_category_worst.npy
+Category-Testing/A4_category_tight.npy
+Category-Testing/A4_category_default.npy
+Category-Testing/A4_category_dark.npy
+Category-Testing/A4_category_bright.npy
+A6_568_29x29_gpu.npy
+A4_640_29x29_gpu.npy
+Models/model1.pt
