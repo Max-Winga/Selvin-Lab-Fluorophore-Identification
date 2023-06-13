@@ -14,3 +14,6 @@ Region3-1.tif
 A4_640.npy
 A6_568.npy
 localizations.npy
+PSF_Identifier_Attempt_2.ipynb
+A4_640_29x29_gpu.npy
+A6_568_29x29_gpu.npy
