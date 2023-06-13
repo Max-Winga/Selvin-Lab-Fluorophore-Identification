@@ -30,3 +30,10 @@ Category-Testing/A4_category_bright.npy
 A6_568_29x29_gpu.npy
 A4_640_29x29_gpu.npy
 Models/model1.pt
+Models/model2.pt
+Models/model3.pt
+Models/model4.pt
+Raw Data/Good Data/CF660c-GaM_No1CG_100EMG_50ms_28mW647_0mW405.tif
+Raw Data/Good Data/A647-GoatAntiMouse-No1CG-100EMG-50ms_28mW.tif
+Raw Data/CF660c-GaM_No1CG_100EMG_50ms_15mW647_0mW405_small.tif
+Raw Data/A647-GoatAntiMouse-No1CG-100EMG-50ms_2_40mW.tif
