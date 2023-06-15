@@ -61,3 +61,8 @@ Models/model8.pt
 Models/model7.pt
 Models/model6.pt
 Models/model5.pt
+PSF Frames/CF660c_good_PSFs.npy
+PSF Frames/CF660c_combined_PSFs.npy
+PSF Frames/A647_good_PSFs.npy
+PSF Frames/A647_combined_PSFs.npy
+Models/model9.pt
