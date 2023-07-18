@@ -97,3 +97,9 @@ __pycache__/PSFDataset.cpython-38.pyc
 __pycache__/PSF_Preprocessing.cpython-38.pyc
 __pycache__/ClassifierModel.cpython-38.pyc
 __pycache__/CapsuleNetwork.cpython-38.pyc
+Pytorch Datasets/Cover Slip (A647 CF660c)/A647_vs_CF660c_all_13px.pt
+Pytorch Datasets/Normalization/Normalized/norm_testing.pt
+Pytorch Datasets/Normalization/Normalized/norm_training.pt
+Pytorch Datasets/Normalization/Raw/raw_testing.pt
+Pytorch Datasets/Normalization/Raw/raw_training.pt
+Pytorch Datasets/Real Data (A647 CF660c)/A647_vs_CF660c_most_normal_single_movie_13px.pt

@@ -53,7 +53,7 @@ class MultiPSFDataset(Dataset):
         )
     
     @classmethod
-    def create_from_PSFs(cls, categories, class_names=None, device=None):
+    def create_from_PSFs(cls, categories, class_names=None, device=None, normalize=False):
         # Get the minimum class size
         min_class_size = min(len(category) for category in categories)
         random_seed = 1 # random seed for reproducibility
@@ -62,11 +62,23 @@ class MultiPSFDataset(Dataset):
         equalized_categories = [category[np.random.randint(category.shape[0], size=min_class_size), ...] 
                             for category in categories]
         # Assign data to classes
-        data = np.concatenate(equalized_categories).astype(np.int32)
+        if normalize:
+            normalized = np.array([cls.normalize(image) for image in np.concatenate(equalized_categories)])
+            data = normalized.astype(np.float16)
+        else:
+            data = np.concatenate(equalized_categories).astype(np.int32)
         labels = np.concatenate([np.full(min_class_size, i) for i, _ in enumerate(categories)])
         indices = np.random.choice(np.arange(len(data)), size=len(data), replace=False)
         return cls(data, labels, indices, class_names=class_names, device=device)
-
+    
+    @classmethod
+    def normalize(cls, image):
+        """Normalize a numpy array representing an image to 0-1 range"""
+        image_min = np.min(image)
+        image_max = np.max(image)
+        image_range = image_max - image_min
+        normalized = (image - image_min) / image_range
+        return normalized
     
     def train(self):
         self.mode = "train"
