@@ -9,7 +9,7 @@ import torch.nn as nn
 
 class ClassifierModel(nn.Module):
     # constructor
-    def __init__(self, channel_widths, linear_sizes, kernel, pooling, nonlinearity=nn.ReLU()):
+    def __init__(self, channel_widths, linear_sizes, kernel, pooling, nonlinearity=nn.ReLU(), num_classes=2):
         super(ClassifierModel, self).__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -18,6 +18,7 @@ class ClassifierModel(nn.Module):
         self.kernel = kernel
         self.pooling = pooling
         self.nonlinearity = nonlinearity
+        self.num_classes = num_classes
         
         layers = []
         for i in range(len(channel_widths)-2):
@@ -39,7 +40,7 @@ class ClassifierModel(nn.Module):
             in_features = size
         self.fully_connected = nn.Sequential(*fc_layers)
 
-        self.linear = nn.Linear(in_features, 2)  # score each class to obtain logits\
+        self.linear = nn.Linear(in_features, num_classes)  # score each class to obtain logits
         self.to(self.device)
         
         # Initialize lists to store performance metrics
@@ -266,34 +267,31 @@ class ClassifierModel(nn.Module):
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=128)
         self.eval()
 
-        confidences = []
+        confidences = [[] for _ in range(self.num_classes)]
 
         with torch.no_grad():
             for images, targets in dataloader:
                 class_probs = torch.nn.functional.softmax(self(images), dim=1)
 
-                # High confidence for class A (label 0) will be close to 1
-                # and high confidence for class B (label 1) will be close to 0
-                confidence_score = 1 - class_probs[:, 1]
+                for i in range(self.num_classes):
+                    confidences[i].extend(class_probs[:, i].tolist())
 
-                confidences.extend(confidence_score.tolist())
+        # Plot the histogram for each class
+        for i in range(self.num_classes):
+            plt.hist(confidences[i], bins=20, range=(0, 1), alpha=0.7, label='Class {}'.format(i))
 
-        # Plot the histogram
-        plt.hist(confidences, bins=20, range=(0, 1), alpha=0.7)
         plt.title("Confidence Histogram")
         plt.xlabel("Confidence Score")
         plt.ylabel("Frequency")
+        plt.legend()
         plt.show()
 
     # Plots accuracy on each class with separate columns for correct/incorrect/rejected
     def plot_classification_results(self, dataset, confidence_threshold=0.5):
-
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=128)
         self.eval()
 
-        correct_counts = {0: 0, 1: 0}
-        incorrect_counts = {0: 0, 1: 0} 
-        rejected_counts = {0: 0, 1: 0}
+        class_counts = {i: {'correct': 0, 'incorrect': 0, 'rejected': 0} for i in range(self.num_classes)}
 
         with torch.no_grad():
             for images, targets in dataloader:
@@ -302,34 +300,38 @@ class ClassifierModel(nn.Module):
                 _, predicted = torch.max(outputs.data, 1)
                 softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
 
-                for label in [0, 1]:
+                for label in range(self.num_classes):
                     is_label = targets == label
 
-                    confident_indices = softmax_outputs[:, label] > confidence_threshold
-                    
+                    confident_indices = softmax_outputs.max(1).values > confidence_threshold
+
                     correct_indices = predicted[is_label & confident_indices] == label
                     incorrect_indices = predicted[is_label & confident_indices] != label
                     rejected_indices = ~confident_indices & is_label
                     
-                    correct_counts[label] += correct_indices.sum().item()
-                    incorrect_counts[label] += incorrect_indices.sum().item()
-                    rejected_counts[label] += rejected_indices.sum().item()
+                    class_counts[label]['correct'] += correct_indices.sum().item()
+                    class_counts[label]['incorrect'] += incorrect_indices.sum().item()
+                    class_counts[label]['rejected'] += rejected_indices.sum().item()
 
-        labels = dataset.class_names
+        labels = ['Class {}'.format(i) for i in range(self.num_classes)]
+        categories = ['correct', 'incorrect', 'rejected']
+
+        counts = [[class_counts[label][category] for category in categories] for label in range(self.num_classes)]
+
+        counts = np.array(counts).T  # transpose so each row is a category
         
-        x = np.arange(len(labels))
-        width = 0.25
-        
+        x = np.arange(len(labels))  # label locations
+        width = 0.2  # width of the bars
+
         fig, ax = plt.subplots()
         
-        correct_bars = ax.bar(x - width, [correct_counts[0], correct_counts[1]], width, label='Correct')
-        incorrect_bars = ax.bar(x, [incorrect_counts[0], incorrect_counts[1]], width, label='Incorrect') 
-        rejected_bars = ax.bar(x + width, [rejected_counts[0], rejected_counts[1]], width, label='Rejected')
-
+        for i, category in enumerate(categories):
+            ax.bar(x + i*width, counts[i], width, label=category)
+        
         ax.set_xlabel('Classes')
         ax.set_ylabel('Counts')
-        ax.set_title('Classification Results')
-        ax.set_xticks(x)
+        ax.set_title(f'Classification Results with Confidence Threshold: {confidence_threshold}')
+        ax.set_xticks(x + width)
         ax.set_xticklabels(labels)
         ax.legend()
 
@@ -352,6 +354,7 @@ class ClassifierModel(nn.Module):
             'kernel': self.kernel,
             'pooling': self.pooling,
             'nonlinearity': type(self.nonlinearity),  # save the type of nonlinearity
+            'num_classes': self.num_classes,
             'best_model_state_dict': self.best_model_state_dict,
         }
         torch.save(checkpoint, PATH)
@@ -367,6 +370,7 @@ class ClassifierModel(nn.Module):
             kernel=checkpoint['kernel'],
             pooling=checkpoint['pooling'],
             nonlinearity=checkpoint['nonlinearity'](),  # instantiate the nonlinearity
+            num_classes=checkpoint['num_classes'],  # load the number of classes
         )
         model.load_state_dict(checkpoint['model_state_dict'])
         model.train_losses = checkpoint['train_losses']
