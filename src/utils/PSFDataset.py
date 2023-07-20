@@ -53,7 +53,7 @@ class PSFDataset(Dataset):
         )
     
     @classmethod
-    def create_from_PSFs(cls, categories, class_names=None, device=None, normalize=False):
+    def create_from_PSFs(cls, categories, class_names=None, device=None, normalize=False, split=0.85):
         # Get the minimum class size
         min_class_size = min(len(category) for category in categories)
         random_seed = 1 # random seed for reproducibility
@@ -69,7 +69,7 @@ class PSFDataset(Dataset):
             data = np.concatenate(equalized_categories).astype(np.int32)
         labels = np.concatenate([np.full(min_class_size, i) for i, _ in enumerate(categories)])
         indices = np.random.choice(np.arange(len(data)), size=len(data), replace=False)
-        return cls(data, labels, indices, class_names=class_names, device=device)
+        return cls(data, labels, indices, class_names=class_names, split=split, device=device)
     
     @classmethod
     def normalize(cls, image):
