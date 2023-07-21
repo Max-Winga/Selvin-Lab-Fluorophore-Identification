@@ -5,11 +5,21 @@ import os
 import tifffile
 from tqdm import tqdm
 import logging
-
-
 import trackpy as tp
 
 def get_PSF_frame(movie_frame, x, y, frame_size, keep_edges=False):
+    """Extracts a PSF frame from a given movie frame at specified coordinates.
+
+    Args:
+        movie_frame (array-like): The frame from the movie.
+        x (float): The x-coordinate of the center of the PSF.
+        y (float): The y-coordinate of the center of the PSF.
+        frame_size (int): The size of the PSF frame.
+        keep_edges (bool, optional): Whether to keep PSFs that are near the edge of the movie frame. Defaults to False.
+
+    Returns:
+        array-like or bool: The PSF frame if it can be extracted, otherwise False.
+    """
     half_frame = int(frame_size/2)
     int_x = round(x); int_y = round(y)
     lower_x = int_x - half_frame
@@ -33,6 +43,23 @@ def get_PSF_frame(movie_frame, x, y, frame_size, keep_edges=False):
     return np.array(movie_frame)[lower_y:upper_y, lower_x:upper_x]
 
 def get_PSF_frames(movie, minmass=2000, separation=3, diameter=7, frame_size=13, percentile=0.9, print_progress=False, to_plot=False, movie_frames=True, dpi=100):
+    """Extracts PSF frames from a given movie.
+
+    Args:
+        movie (array-like): The movie.
+        minmass (float, optional): The minimum integrated brightness for a feature to be identified. Defaults to 2000.
+        separation (int, optional): The minimum separation between features. Defaults to 3.
+        diameter (int, optional): The approximate size of the features in pixels. Defaults to 7.
+        frame_size (int, optional): The size of the PSF frame. Defaults to 13.
+        percentile (float, optional): The percentile to use for the threshold. Defaults to 0.9.
+        print_progress (bool, optional): Whether to print progress. Defaults to False.
+        to_plot (bool, optional): Whether to plot the frames. Defaults to False.
+        movie_frames (bool or array-like, optional): The frames of the movie to process. If True, all frames are processed. Defaults to True.
+        dpi (int, optional): The resolution for plots in dots per inch. Defaults to 100.
+
+    Returns:
+        array-like: The PSF frames.
+    """
     if type(movie_frames) == bool:
         movie_frames = range(len(movie))
     
@@ -95,6 +122,20 @@ def get_PSF_frames(movie, minmass=2000, separation=3, diameter=7, frame_size=13,
     return PSF_frames
 
 def get_PSF_frames_movie_list(movies, minmass=2000, separation=3, diameter=7, frame_size=13, percentile=0.9, print_progress=False):
+    """Extracts PSF frames from a list of movies.
+
+    Args:
+        movies (list of array-like): The list of movies.
+        minmass (float, optional): The minimum integrated brightness for a feature to be identified. Defaults to 2000.
+        separation (int, optional): The minimum separation between features. Defaults to 3.
+        diameter (int, optional): The approximate size of the features in pixels. Defaults to 7.
+        frame_size (int, optional): The size of the PSF frame. Defaults to 13.
+        percentile (float, optional): The percentile to use for the threshold. Defaults to 0.9.
+        print_progress (bool, optional): Whether to print progress. Defaults to False.
+
+    Returns:
+        array-like: The PSF frames from all movies.
+    """
     first = True
     for i in range(len(movies)):
         movie = movies[i]
@@ -107,6 +148,12 @@ def get_PSF_frames_movie_list(movies, minmass=2000, separation=3, diameter=7, fr
     return PSF_list
 
 def show_PSFs(PSF_frames, random=True):
+    """Displays a selection of PSF frames.
+
+    Args:
+        PSF_frames (array-like): The PSF frames.
+        random (bool, optional): Whether to randomly select the PSF frames to display. Defaults to True.
+    """
     print(PSF_frames.shape)
     num_PSFs = 15
     if not random:
@@ -132,6 +179,14 @@ def show_PSFs(PSF_frames, random=True):
     plt.show()
 
 def load_tif_movies(folder_path):
+    """Loads all TIFF movies from a given folder.
+
+    Args:
+        folder_path (str): The path to the folder containing the TIFF files.
+
+    Returns:
+        list: A list of the loaded movies.
+    """
     movies = []
     logger = logging.getLogger('tifffile')
     prev_level = logger.getEffectiveLevel()  # get the current logging level

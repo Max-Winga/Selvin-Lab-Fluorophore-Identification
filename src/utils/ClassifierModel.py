@@ -8,8 +8,31 @@ import torch
 import torch.nn as nn
 
 class ClassifierModel(nn.Module):
-    # constructor
+    """A PyTorch Module for a convolutional neural network classifier.
+
+    This class provides methods for training and testing a classifier model, as well as visualizing its performance.
+    The model consists of some number of convolution layers followed by fully connected layers.
+
+    Attributes:
+        channel_widths (list of int): The number of channels for each convolutional layer.
+        linear_sizes (list of int): The sizes of the fully connected layers.
+        kernel (int): The size of the kernel for the convolutional layers.
+        pooling (torch.nn.Module): The pooling layer.
+        nonlinearity (torch.nn.Module): The nonlinearity used in the model. Defaults to nn.ReLU().
+        num_classes (int): The number of classes to predict. Defaults to 2.
+    """
     def __init__(self, channel_widths, linear_sizes, kernel, pooling, nonlinearity=nn.ReLU(), num_classes=2):
+        """Initializes the ClassifierModel.
+
+        Args:
+            channel_widths (list of int): The number of channels for each convolutional layer.
+                Should begin with size of number of frames (1 for standard data, 2 for ratiometric).
+            linear_sizes (list of int): The sizes of the fully connected layers.
+            kernel (int): The size of the kernel for the convolutional layers.
+            pooling (torch.nn.Module): The pooling layer.
+            nonlinearity (torch.nn.Module): The nonlinearity used in the model. Defaults to nn.ReLU().
+            num_classes (int): The number of classes to predict. Defaults to 2.
+        """
         super(ClassifierModel, self).__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -54,8 +77,15 @@ class ClassifierModel(nn.Module):
         self.training_parameter_history = []
         self.training_time = 0
         
-    # forward pass
     def forward(self, x):
+        """Performs a forward pass through the model.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The output tensor.
+        """
         x = x.to(self.device)
         B = x.size(0)
         features = self.backbone(x)
@@ -65,15 +95,30 @@ class ClassifierModel(nn.Module):
         logits = self.linear(fc_output)
         return logits
     
-    # function to record performance metrics
     def record_metrics(self, train_loss, train_acc, val_loss, val_acc):
+        """Records the model's performance metrics.
+
+        Args:
+            train_loss (float): The training loss.
+            train_acc (float): The training accuracy.
+            val_loss (float): The validation loss.
+            val_acc (float): The validation accuracy.
+        """
         self.train_losses.append(train_loss)
         self.train_accs.append(train_acc)
         self.val_losses.append(val_loss)
         self.val_accs.append(val_acc)
     
-    # Get validation stats
     def validate(self, dataloader, criterion):
+        """Validates the model on a given dataloader and criterion.
+
+        Args:
+            dataloader (DataLoader): The dataloader for validation data.
+            criterion (torch.nn.Module): The loss function.
+
+        Returns:
+            tuple: A tuple containing the validation loss and accuracy.
+        """
         val_loss = 0
         val_acc = 0
         # set model to eval mode (again, unnecessary here but good practice)
@@ -88,9 +133,17 @@ class ClassifierModel(nn.Module):
                 val_acc += (class_logits.data.max(1)[1]).eq(targets).sum().item()
         return val_loss, val_acc
 
-    # Main training function
     def train_model(self, all_data, training_indices, validation_indices, config, verbose=True, printouts=20):
-        # unpack configuration parameters
+        """Trains the model on given data.
+
+        Args:
+            all_data (torch.utils.data.Dataset): The dataset containing all data.
+            training_indices (array-like): The indices for the training data.
+            validation_indices (array-like): The indices for the validation data.
+            config (dict): The configuration for the training process, containing 'lr', 'n_epochs', and 'batch_size'.
+            verbose (bool, optional): Whether to print progress during training. Defaults to True.
+            printouts (int, optional): The number of times to print progress during training. Defaults to 20.
+        """
         lr = config['lr'] # learning rate
         n_epochs = config['n_epochs'] # number of passes (epochs) through the training data
         batch_size = config['batch_size']
@@ -159,8 +212,8 @@ class ClassifierModel(nn.Module):
             print("Training interrupted. Stopping after completing {} epochs of {} planned.".format(self.epochs_trained-previous_epochs, n_epochs))
         return
 
-    # function to plot training performance metrics
     def plot_model_results(self):
+        """Plots the model's performance results."""
         plt.figure(figsize=(15, 10))
         plt.subplot(221)
         plt.semilogy(self.train_losses, color='royalblue')
@@ -184,8 +237,12 @@ class ClassifierModel(nn.Module):
         plt.grid(True)
         plt.show()
 
-    # Function to update and retrieve total model training time
     def get_training_time(self):
+        """Gets the total training time for the model.
+
+        Returns:
+            float: The total training time in seconds.
+        """
         self.training_time = 0
         for dict in self.training_parameter_history:
             self.training_time += dict['Training Time (s)']
@@ -195,9 +252,17 @@ class ClassifierModel(nn.Module):
         print(f"Model trained for: {hours} hrs, {minutes} mins, {seconds} s")
         return self.training_time
     
-    # Test different confidence treshold results on accuracy
     def test_with_thresholds(self, model, dataset, thresholds=np.arange(0.5, 1, 0.01)):
-        # test model on withheld test data
+        """Tests the model with various confidence thresholds.
+
+        Args:
+            model (torch.nn.Module): The model to test.
+            dataset (torch.utils.data.Dataset): The dataset to test the model on.
+            thresholds (array-like, optional): The confidence thresholds to test. Defaults to np.arange(0.5, 1, 0.01).
+
+        Returns:
+            list: A list of tuples, each containing a threshold, the test accuracy at that threshold, and the rejection ratio.
+        """
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=128)
         model.eval()
         
@@ -233,8 +298,15 @@ class ClassifierModel(nn.Module):
         
         return results
 
-    # Plot results from 'test_with_thresholds'
     def plot_confidence_thresholding(self, datasets, thresholds=np.arange(0.5, 1, 0.01), use_best_model=False, colors=['orange', 'blue', 'green', 'red', 'black']):
+        """Plots the model's accuracy and rejection ratio at various confidence thresholds.
+
+        Args:
+            datasets (list of tuple): A list of tuples, each containing a dataset name and dataset.
+            thresholds (array-like, optional): The confidence thresholds to test. Defaults to np.arange(0.5, 1, 0.01).
+            use_best_model (bool, optional): Whether to use the best model for testing. Defaults to False.
+            colors (list of str, optional): The colors to use for plotting. Defaults to ['orange', 'blue', 'green', 'red', 'black'].
+        """
         if use_best_model:
             model_state_dict = self.best_model_state_dict
         else:
@@ -261,9 +333,12 @@ class ClassifierModel(nn.Module):
         plt.title("Model Accuracy with Confidence Thresholding")
         plt.show()
 
-    # Plots a histogram of the confidence levels for all predictions
     def confidence_histogram(self, dataset):
-        # Get the model's predictions on the dataset
+        """Plots a histogram of the model's confidence levels for each class on a given dataset.
+
+        Args:
+            dataset (torch.utils.data.Dataset): The dataset to test the model on.
+        """
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=128)
         self.eval()
 
@@ -286,8 +361,14 @@ class ClassifierModel(nn.Module):
         plt.legend()
         plt.show()
 
-    # Plots accuracy on each class with separate columns for correct/incorrect/rejected
     def plot_classification_results(self, dataset, confidence_threshold=0.5):
+        """Plots the model's classification results for each class on a given dataset.
+        Shows correct/incorrect/rejected for each class at the given confidence threshold.
+
+        Args:
+            dataset (torch.utils.data.Dataset): The dataset to test the model on.
+            confidence_threshold (float, optional): The confidence threshold to use. Defaults to 0.5.
+        """
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=128)
         self.eval()
 
@@ -337,8 +418,12 @@ class ClassifierModel(nn.Module):
 
         plt.show()
 
-    # Save everything about the model so it can be reloaded later
     def save_model(self, PATH):
+        """Saves the model to a file.
+
+        Args:
+            PATH (str): The path to save the model to.
+        """
         checkpoint = {
             'model_state_dict': self.state_dict(),
             'train_losses': self.train_losses,
@@ -359,9 +444,16 @@ class ClassifierModel(nn.Module):
         }
         torch.save(checkpoint, PATH)
 
-    # Reload everything in the model from a file
     @classmethod
     def load_model(cls, PATH):
+        """Loads a model from a file.
+
+        Args:
+            PATH (str): The path to load the model from.
+
+        Returns:
+            ClassifierModel: The loaded model.
+        """
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         checkpoint = torch.load(PATH, map_location=torch.device(device))
         model = cls(
